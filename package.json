@@ -1,0 +1,73 @@
+{
+  "name": "tree-and-folders",
+  "displayName": "Tree and Folders",
+  "description": "Generate and create folder structures from a text tree.",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.83.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:tree-and-folders.generateTreeFile",
+    "onCommand:tree-and-folders.copyTreeToClipboard",
+    "onCommand:tree-and-folders.createStructureFromFile"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "tree-and-folders.generateTreeFile",
+        "title": "Generate Tree File"
+      },
+      {
+        "command": "tree-and-folders.copyTreeToClipboard",
+        "title": "Copy Tree to Clipboard"
+      },
+      {
+        "command": "tree-and-folders.createStructureFromFile",
+        "title": "Generate Structure from this File"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "when": "explorerResourceIsFolder",
+          "command": "tree-and-folders.generateTreeFile",
+          "group": "navigation@1"
+        },
+        {
+          "when": "explorerResourceIsFolder",
+          "command": "tree-and-folders.copyTreeToClipboard",
+          "group": "navigation@2"
+        },
+        {
+          "when": "resourceExtname == .txt",
+          "command": "tree-and-folders.createStructureFromFile",
+          "group": "navigation@3"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.83.0",
+    "@types/mocha": "^10.0.2",
+    "@types/node": "18.x",
+    "@typescript-eslint/eslint-plugin": "^6.7.3",
+    "@typescript-eslint/parser": "^6.7.3",
+    "eslint": "^8.50.0",
+    "glob": "^10.3.3",
+    "mocha": "^10.2.0",
+    "typescript": "^5.2.2",
+    "@vscode/test-electron": "^2.3.4"
+  }
+}
