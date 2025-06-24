@@ -13,7 +13,8 @@
     "onCommand:tree-and-folders.generateTreeFile",
     "onCommand:tree-and-folders.copyTreeToClipboard",
     "onCommand:tree-and-folders.createStructureFromFile",
-    "onCommand:tree-and-folders.extractToMarkdown"
+    "onCommand:tree-and-folders.extractToMarkdown",
+    "onCommand:tree-and-folders.rebuildFromMarkdown"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -33,6 +34,10 @@
       {
         "command": "tree-and-folders.extractToMarkdown",
         "title": "Extract Project to Markdown"
+      },
+      {
+        "command": "tree-and-folders.rebuildFromMarkdown",
+        "title": "Rebuild Project from project.md"
       }
     ],
     "menus": {
@@ -56,6 +61,11 @@
           "when": "resourceFilename == tree.txt",
           "command": "tree-and-folders.createStructureFromFile",
           "group": "navigation@4"
+        },
+        {
+          "when": "resourceFilename == project.md",
+          "command": "tree-and-folders.rebuildFromMarkdown",
+          "group": "navigation@5"
         }
       ]
     }

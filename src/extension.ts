@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const IGNORE_LIST = ['node_modules', '.git', 'folder-structure', 'out', '.vscode'];
-const MAX_FILE_SIZE_BYTES = 1 * 4096 * 4096; // 4 MB limit to avoid large files
+const MAX_FILE_SIZE_BYTES = 1 * 4096 * 4096; // 4 MB limit
 
 export function activate(context: vscode.ExtensionContext) {
     
@@ -20,7 +20,6 @@ export function activate(context: vscode.ExtensionContext) {
         const rootPath = workspaceFolders[0].uri.fsPath;
         const outputDir = path.join(rootPath, 'folder-structure');
         const outputPath = path.join(outputDir, 'tree.txt');
-
         if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir);
         fs.writeFileSync(outputPath, treeString);
         vscode.window.showInformationMessage(`Tree structure saved to: folder-structure/tree.txt`);
@@ -58,22 +57,38 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
         const rootPath = workspaceFolders[0].uri.fsPath;
-
         try {
             const markdownContent = generateMarkdownContent(startPath);
             const outputDir = path.join(rootPath, 'folder-structure');
             const outputPath = path.join(outputDir, 'project.md');
-            
             if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir);
             fs.writeFileSync(outputPath, markdownContent);
-            
             vscode.window.showInformationMessage(`Project extracted to: folder-structure/project.md`);
         } catch (error: any) {
             vscode.window.showErrorMessage(`Failed to extract project: ${error.message}`);
         }
     });
 
-    context.subscriptions.push(generateTreeFile, copyTreeToClipboard, createStructureFromFile, extractToMarkdown);
+    // Command 5: Rebuild project from a project.md file
+    const rebuildFromMarkdown = vscode.commands.registerCommand('tree-and-folders.rebuildFromMarkdown', async (uri: vscode.Uri) => {
+        if (!uri) return;
+        const basePath = path.dirname(uri.fsPath);
+        const markdownContent = fs.readFileSync(uri.fsPath, 'utf-8');
+        try {
+            await rebuildProjectFromMarkdown(basePath, markdownContent);
+            vscode.window.showInformationMessage('Project rebuilt successfully from project.md!');
+        } catch (error: any) {
+            vscode.window.showErrorMessage(`Failed to rebuild project: ${error.message}`);
+        }
+    });
+
+    context.subscriptions.push(
+        generateTreeFile,
+        copyTreeToClipboard,
+        createStructureFromFile,
+        extractToMarkdown,
+        rebuildFromMarkdown
+    );
 }
 
 function generateTree(startPath: string): string {
@@ -95,7 +110,7 @@ function generateTree(startPath: string): string {
                     tree += `${prefix}${connector}${file}\n`;
                 }
             });
-        } catch (error) { /* Silently ignore errors like permission denied */ }
+        } catch (error) {}
         return tree;
     }
     return `${dirName}/\n${walk(startPath, '')}`;
@@ -129,11 +144,9 @@ function createStructureFromText(basePath: string, text: string) {
 }
 
 function generateMarkdownContent(startPath: string): string {
-    let markdown = "## Folder Structure \n\n";
-    
+    let markdown = "## Folder Structure\n\n";
     markdown += "```\n" + generateTree(startPath) + "```\n\n";
     markdown += "## Code\n\n";
-
     function walkAndRead(dir: string) {
         try {
             const files = fs.readdirSync(dir);
@@ -141,25 +154,52 @@ function generateMarkdownContent(startPath: string): string {
                 if (IGNORE_LIST.includes(file)) return;
                 const filePath = path.join(dir, file);
                 const stat = fs.statSync(filePath);
-
                 if (stat.isDirectory()) {
                     walkAndRead(filePath);
                 } else if (stat.isFile() && stat.size < MAX_FILE_SIZE_BYTES) {
                     const content = fs.readFileSync(filePath, 'utf-8');
                     const relativePath = path.relative(startPath, filePath);
                     const language = path.extname(file).substring(1);
-
                     markdown += `### \`${relativePath.replace(/\\/g, '/')}\`\n\n`;
                     markdown += `\`\`\`${language}\n`;
                     markdown += content;
                     markdown += "\n\`\`\`\n\n";
                 }
             });
-        } catch (error) {  }
+        } catch (error) {}
     }
-
     walkAndRead(startPath);
     return markdown;
+}
+
+// Function: Rebuild a project from a markdown file
+function rebuildProjectFromMarkdown(basePath: string, markdownContent: string) {
+    // Step 1: Extract the folder structure tree
+    const treeRegex = /## Folder Structure\s*```([\s\S]*?)```/;
+    const treeMatch = markdownContent.match(treeRegex);
+    if (!treeMatch || !treeMatch[1]) {
+        throw new Error('Could not find the folder structure block in the markdown file.');
+    }
+    const treeText = treeMatch[1].trim();
+
+    // Step 2: Create the folder and empty file skeleton
+    createStructureFromText(basePath, treeText);
+
+    // Step 3: Extract and write the content for each file
+    const codeBlockRegex = /### `(.+?)`\s*```[^\n]*\n([\s\S]*?)\n```/g;
+    let match;
+    while ((match = codeBlockRegex.exec(markdownContent)) !== null) {
+        const relativePath = match[1];
+        const codeContent = match[2];
+        const fullPath = path.join(basePath, relativePath);
+
+        // Ensure the directory exists before writing the file
+        const dirName = path.dirname(fullPath);
+        if (!fs.existsSync(dirName)) {
+            fs.mkdirSync(dirName, { recursive: true });
+        }
+        fs.writeFileSync(fullPath, codeContent);
+    }
 }
 
 export function deactivate() {}
