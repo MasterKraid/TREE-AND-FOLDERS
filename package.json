@@ -12,7 +12,8 @@
   "activationEvents": [
     "onCommand:tree-and-folders.generateTreeFile",
     "onCommand:tree-and-folders.copyTreeToClipboard",
-    "onCommand:tree-and-folders.createStructureFromFile"
+    "onCommand:tree-and-folders.createStructureFromFile",
+    "onCommand:tree-and-folders.extractToMarkdown"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -27,7 +28,11 @@
       },
       {
         "command": "tree-and-folders.createStructureFromFile",
-        "title": "Generate Structure from this File"
+        "title": "Create Folder Structure from tree.txt"
+      },
+      {
+        "command": "tree-and-folders.extractToMarkdown",
+        "title": "Extract Project to Markdown"
       }
     ],
     "menus": {
@@ -43,9 +48,14 @@
           "group": "navigation@2"
         },
         {
-          "when": "resourceExtname == .txt",
-          "command": "tree-and-folders.createStructureFromFile",
+          "when": "explorerResourceIsFolder",
+          "command": "tree-and-folders.extractToMarkdown",
           "group": "navigation@3"
+        },
+        {
+          "when": "resourceFilename == tree.txt",
+          "command": "tree-and-folders.createStructureFromFile",
+          "group": "navigation@4"
         }
       ]
     }
