@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const IGNORE_LIST = ['node_modules', '.git', 'folder-structure', 'out', '.vscode'];
-const MAX_FILE_SIZE_BYTES = 1 * 4096 * 4096; // 4 MB limit
+const MAX_FILE_SIZE_BYTES = 4 * 1024 * 1024; // 4 MB limit, the last one was insane am so stupid
 
 export function activate(context: vscode.ExtensionContext) {
     
@@ -144,6 +144,7 @@ function createStructureFromText(basePath: string, text: string) {
 }
 
 function generateMarkdownContent(startPath: string): string {
+    const rootName = path.basename(startPath);
     let markdown = "## Folder Structure\n\n";
     markdown += "```\n" + generateTree(startPath) + "```\n\n";
     markdown += "## Code\n\n";
@@ -160,7 +161,8 @@ function generateMarkdownContent(startPath: string): string {
                     const content = fs.readFileSync(filePath, 'utf-8');
                     const relativePath = path.relative(startPath, filePath);
                     const language = path.extname(file).substring(1);
-                    markdown += `### \`${relativePath.replace(/\\/g, '/')}\`\n\n`;
+                    const logicalPath = path.join(rootName, relativePath).replace(/\\/g, '/');
+                    markdown += `### \`${logicalPath}\`\n\n`;
                     markdown += `\`\`\`${language}\n`;
                     markdown += content;
                     markdown += "\n\`\`\`\n\n";
@@ -173,32 +175,30 @@ function generateMarkdownContent(startPath: string): string {
 }
 
 // Function: Rebuild a project from a markdown file
-function rebuildProjectFromMarkdown(basePath: string, markdownContent: string) {
-    // Step 1: Extract the folder structure tree
-    const treeRegex = /## Folder Structure\s*```([\s\S]*?)```/;
-    const treeMatch = markdownContent.match(treeRegex);
-    if (!treeMatch || !treeMatch[1]) {
-        throw new Error('Could not find the folder structure block in the markdown file.');
-    }
-    const treeText = treeMatch[1].trim();
-
-    // Step 2: Create the folder and empty file skeleton
-    createStructureFromText(basePath, treeText);
-
-    // Step 3: Extract and write the content for each file
+function rebuildProjectFromMarkdown(basePath: string, markdownContent: string) {   
     const codeBlockRegex = /### `(.+?)`\s*```[^\n]*\n([\s\S]*?)\n```/g;
     let match;
-    while ((match = codeBlockRegex.exec(markdownContent)) !== null) {
-        const relativePath = match[1];
-        const codeContent = match[2];
-        const fullPath = path.join(basePath, relativePath);
 
-        // Ensure the directory exists before writing the file
-        const dirName = path.dirname(fullPath);
-        if (!fs.existsSync(dirName)) {
-            fs.mkdirSync(dirName, { recursive: true });
+    while ((match = codeBlockRegex.exec(markdownContent)) !== null) {
+        const logicalPath = match[1];
+        const codeContent = match[2];
+
+        // Find the first slash 
+        const firstSlashIndex = logicalPath.indexOf('/');
+        if (firstSlashIndex === -1) {
+            continue; // Skip malformed paths 
         }
-        fs.writeFileSync(fullPath, codeContent);
+        const finalRelativePath = logicalPath.substring(firstSlashIndex + 1);
+        if (!finalRelativePath) {
+            continue; // Skip skip like a froggo
+        }
+
+        const fullPhysicalPath = path.join(basePath, finalRelativePath);
+        const directoryForFile = path.dirname(fullPhysicalPath);
+
+        // ahhhhhhhhhhhhhhhhh
+        fs.mkdirSync(directoryForFile, { recursive: true });
+        fs.writeFileSync(fullPhysicalPath, codeContent);
     }
 }
 
