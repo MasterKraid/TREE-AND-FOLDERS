@@ -9,7 +9,7 @@ export function activate(context: vscode.ExtensionContext) {
     
     // Command 1: Generate a tree.txt file from a folder
     const generateTreeFile = vscode.commands.registerCommand('tree-and-folders.generateTreeFile', (uri: vscode.Uri) => {
-        if (!uri) return;
+        if (!uri) {return;}
         const startPath = uri.fsPath;
         const treeString = generateTree(startPath);
         const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -20,14 +20,14 @@ export function activate(context: vscode.ExtensionContext) {
         const rootPath = workspaceFolders[0].uri.fsPath;
         const outputDir = path.join(rootPath, 'folder-structure');
         const outputPath = path.join(outputDir, 'tree.txt');
-        if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir);
+        if (!fs.existsSync(outputDir)) {fs.mkdirSync(outputDir);}
         fs.writeFileSync(outputPath, treeString);
         vscode.window.showInformationMessage(`Tree structure saved to: folder-structure/tree.txt`);
     });
 
     // Command 2: Copy the generated tree to the clipboard
     const copyTreeToClipboard = vscode.commands.registerCommand('tree-and-folders.copyTreeToClipboard', (uri: vscode.Uri) => {
-        if (!uri) return;
+        if (!uri) {return;}
         const startPath = uri.fsPath;
         const treeString = generateTree(startPath);
         vscode.env.clipboard.writeText(treeString);
@@ -36,7 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Command 3: Create a folder structure from a tree file
     const createStructureFromFile = vscode.commands.registerCommand('tree-and-folders.createStructureFromFile', async (uri: vscode.Uri) => {
-        if (!uri) return;
+        if (!uri) {return;}
         const basePath = path.dirname(uri.fsPath);
         const fileContent = fs.readFileSync(uri.fsPath, 'utf-8');
         try {
@@ -49,7 +49,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Command 4: Extract project to a single Markdown file
     const extractToMarkdown = vscode.commands.registerCommand('tree-and-folders.extractToMarkdown', (uri: vscode.Uri) => {
-        if (!uri) return;
+        if (!uri) {return;}
         const startPath = uri.fsPath;
         const workspaceFolders = vscode.workspace.workspaceFolders;
         if (!workspaceFolders) {
@@ -61,7 +61,7 @@ export function activate(context: vscode.ExtensionContext) {
             const markdownContent = generateMarkdownContent(startPath);
             const outputDir = path.join(rootPath, 'folder-structure');
             const outputPath = path.join(outputDir, 'project.md');
-            if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir);
+            if (!fs.existsSync(outputDir)) {fs.mkdirSync(outputDir);}
             fs.writeFileSync(outputPath, markdownContent);
             vscode.window.showInformationMessage(`Project extracted to: folder-structure/project.md`);
         } catch (error: any) {
@@ -71,7 +71,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Command 5: Rebuild project from a project.md file
     const rebuildFromMarkdown = vscode.commands.registerCommand('tree-and-folders.rebuildFromMarkdown', async (uri: vscode.Uri) => {
-        if (!uri) return;
+        if (!uri) {return;}
         const basePath = path.dirname(uri.fsPath);
         const markdownContent = fs.readFileSync(uri.fsPath, 'utf-8');
         try {
@@ -118,27 +118,27 @@ function generateTree(startPath: string): string {
 
 function createStructureFromText(basePath: string, text: string) {
     const lines = text.trim().split('\n');
-    if (lines.length === 0) return;
+    if (lines.length === 0) {return;}
     const rootDirName = lines.shift()!.replace('/', '').trim();
-    if (!rootDirName) return;
+    if (!rootDirName) {return;}
     const pathStack = [rootDirName];
     const rootPath = path.join(basePath, rootDirName);
-    if (!fs.existsSync(rootPath)) fs.mkdirSync(rootPath);
+    if (!fs.existsSync(rootPath)) {fs.mkdirSync(rootPath);}
     lines.forEach(line => {
         const level = line.search(/[^│\s├─└]/) / 4;
         let name = line.replace(/[│├└─\s]/g, '').trim();
-        if (!name) return;
+        if (!name) {return;}
         const isDirectory = name.endsWith('/');
-        if (isDirectory) name = name.slice(0, -1);
+        if (isDirectory) {name = name.slice(0, -1);}
         pathStack.length = level;
         pathStack.push(name);
         const fullPath = path.join(basePath, ...pathStack);
         if (isDirectory) {
-            if (!fs.existsSync(fullPath)) fs.mkdirSync(fullPath, { recursive: true });
+            if (!fs.existsSync(fullPath)) {fs.mkdirSync(fullPath, { recursive: true });}
         } else {
             const dirName = path.dirname(fullPath);
-            if (!fs.existsSync(dirName)) fs.mkdirSync(dirName, { recursive: true });
-            if (!fs.existsSync(fullPath)) fs.writeFileSync(fullPath, '');
+            if (!fs.existsSync(dirName)) {fs.mkdirSync(dirName, { recursive: true });}
+            if (!fs.existsSync(fullPath)) {fs.writeFileSync(fullPath, '');}
         }
     });
 }
@@ -152,7 +152,7 @@ function generateMarkdownContent(startPath: string): string {
         try {
             const files = fs.readdirSync(dir);
             files.forEach(file => {
-                if (IGNORE_LIST.includes(file)) return;
+                if (IGNORE_LIST.includes(file)) {return;}
                 const filePath = path.join(dir, file);
                 const stat = fs.statSync(filePath);
                 if (stat.isDirectory()) {
