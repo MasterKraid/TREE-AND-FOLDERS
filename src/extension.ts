@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const IGNORE_LIST = ['node_modules', '.git', 'folder-structure', 'out', '.vscode'];
-const MAX_FILE_SIZE_BYTES = 1 * 1024 * 1024; // 1 MB limit to avoid large files
+const MAX_FILE_SIZE_BYTES = 1 * 4096 * 4096; // 4 MB limit to avoid large files
 
 export function activate(context: vscode.ExtensionContext) {
     
@@ -12,7 +12,6 @@ export function activate(context: vscode.ExtensionContext) {
         if (!uri) return;
         const startPath = uri.fsPath;
         const treeString = generateTree(startPath);
-        // This logic correctly finds the workspace root to place the folder-structure directory
         const workspaceFolders = vscode.workspace.workspaceFolders;
         if (!workspaceFolders) {
             vscode.window.showErrorMessage('No workspace folder open to create the structure in.');
@@ -49,14 +48,10 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    // ====================================================================
-    // KEY CHANGE: NEW COMMAND ADDED HERE
-    // ====================================================================
+    // Command 4: Extract project to a single Markdown file
     const extractToMarkdown = vscode.commands.registerCommand('tree-and-folders.extractToMarkdown', (uri: vscode.Uri) => {
         if (!uri) return;
         const startPath = uri.fsPath;
-
-        // CRITICAL FIX: Use the same reliable logic as generateTreeFile to find the workspace root
         const workspaceFolders = vscode.workspace.workspaceFolders;
         if (!workspaceFolders) {
             vscode.window.showErrorMessage('No workspace folder open to create the markdown file in.');
@@ -133,11 +128,9 @@ function createStructureFromText(basePath: string, text: string) {
     });
 }
 
-// ====================================================================
-// KEY CHANGE: NEW HELPER FUNCTION FOR MARKDOWN
-// ====================================================================
 function generateMarkdownContent(startPath: string): string {
-    let markdown = "## Folder Structure\n\n";
+    let markdown = "## Folder Structure \n\n";
+    
     markdown += "```\n" + generateTree(startPath) + "```\n\n";
     markdown += "## Code\n\n";
 
@@ -150,19 +143,19 @@ function generateMarkdownContent(startPath: string): string {
                 const stat = fs.statSync(filePath);
 
                 if (stat.isDirectory()) {
-                    walkAndRead(filePath); // Recurse into subdirectories
+                    walkAndRead(filePath);
                 } else if (stat.isFile() && stat.size < MAX_FILE_SIZE_BYTES) {
                     const content = fs.readFileSync(filePath, 'utf-8');
                     const relativePath = path.relative(startPath, filePath);
                     const language = path.extname(file).substring(1);
 
-                    markdown += `### \`${relativePath.replace(/\\/g, '/')}\`\n\n`; // Use forward slashes
+                    markdown += `### \`${relativePath.replace(/\\/g, '/')}\`\n\n`;
                     markdown += `\`\`\`${language}\n`;
                     markdown += content;
                     markdown += "\n\`\`\`\n\n";
                 }
             });
-        } catch (error) { /* Silently ignore errors like permission denied */ }
+        } catch (error) {  }
     }
 
     walkAndRead(startPath);
