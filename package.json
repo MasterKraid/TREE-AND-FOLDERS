@@ -4,6 +4,10 @@
   "description": "Generate and create folder structures from a text tree and more!.",
   "version": "0.0.1",
   "publisher": "MasterKraid",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MasterKraid/TREE-AND-FOLDERS"
+  },
   "engines": {
     "vscode": "^1.83.0"
   },

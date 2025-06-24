@@ -97,7 +97,7 @@ This extension is for those times.
 
 ## Contributing
 
-Found a bug? Have an idea for an even more niche feature? Feel free to open an issue or submit a pull request on the [GitHub repository](YOUR_GITHUB_REPO_LINK_HERE).
+Found a bug? Have an idea for an even more niche feature? Feel free to open an issue or submit a pull request on the [GitHub repository](https://github.com/MasterKraid/TREE-AND-FOLDERS).
 
 ---
 Made with coffee and a healthy disregard for the Geneva convention.
