@@ -1,8 +1,9 @@
 {
   "name": "tree-and-folders",
   "displayName": "Tree and Folders",
-  "description": "Generate and create folder structures from a text tree.",
+  "description": "Generate and create folder structures from a text tree and more!.",
   "version": "0.0.1",
+  "publisher": "MasterKraid",
   "engines": {
     "vscode": "^1.83.0"
   },
