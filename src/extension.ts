@@ -95,27 +95,38 @@ function generateTree(startPath: string): string {
     return `${dirName}/\n${walk(startPath, '')}`;
 }
 
-// Parses text and creates the files/folders
+// ====================================================================
+// THIS IS THE CORRECTED FUNCTION
+// ====================================================================
 function createStructureFromText(basePath: string, text: string) {
     const lines = text.trim().split('\n');
-    const pathStack: string[] = [];
-    
+    if (lines.length === 0) return;
+
+    // The first line is the root directory of the new structure
+    const rootDirName = lines.shift()!.replace('/', '').trim();
+    if (!rootDirName) return;
+
+    // The pathStack will keep track of the current directory hierarchy
+    const pathStack = [rootDirName];
+    const rootPath = path.join(basePath, rootDirName);
+    if (!fs.existsSync(rootPath)) {
+        fs.mkdirSync(rootPath);
+    }
+
     lines.forEach(line => {
-        // This regex is more robust for calculating indentation level
-        const indentationMatch = line.match(/^([│\s]*)/);
-        const level = indentationMatch ? indentationMatch[0].length / 4 : 0;
-        
-        // Clean the line to get just the file or folder name
+        // This is a more robust way to find the indentation level.
+        // It finds the index of the first actual character of the name.
+        const level = line.search(/[^│\s├─└]/) / 4;
+
         let name = line.replace(/[│├└─\s]/g, '').trim();
         if (!name) return;
 
-        // The reliable way to check for a directory is the trailing slash
         const isDirectory = name.endsWith('/');
         if (isDirectory) {
             name = name.slice(0, -1);
         }
 
-        // Adjust the path stack based on the current item's level
+        // Adjust the path stack to the correct level for the new item
         pathStack.length = level;
         pathStack.push(name);
         
@@ -132,7 +143,7 @@ function createStructureFromText(basePath: string, text: string) {
                 fs.mkdirSync(dirName, { recursive: true });
             }
             if (!fs.existsSync(fullPath)) {
-                fs.writeFileSync(fullPath, ''); // Create empty file
+                fs.writeFileSync(fullPath, '');
             }
         }
     });
